@@ -101,3 +101,24 @@
         list.append(box);
       });
     }
+
+    document.getElementById("taskForm").addEventListener("submit", event => {
+      event.preventDefault();
+      tasks.push({
+        id: Date.now(),
+        title: document.getElementById("title").value,
+        due: document.getElementById("due").value,
+        priority: document.getElementById("priority").value,
+        where: document.getElementById("where").value,
+        how: document.getElementById("how").value,
+        done: false
+      });
+      save();
+      event.target.reset();
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
