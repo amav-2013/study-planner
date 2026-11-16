@@ -3,18 +3,101 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Study Planner</title>
+  <title>My Study Planner</title>
   <style>
-    body { font-family: sans-serif; background: #fdf6e3; text-align: center; padding: 40px; }
-    h1 { color: #444; }
+    body { font-family: sans-serif; background: #fdf6e3; max-width: 700px; margin: 0 auto; padding: 20px; }
+    h1 { text-align: center; color: #444; }
+    form { display: grid; gap: 8px; background: white; padding: 16px; border-radius: 10px; }
+    input, select, button { padding: 8px; font-size: 1rem; }
+    .task { background: white; border-left: 10px solid grey; margin: 10px 0; padding: 10px;
+            border-radius: 8px; display: flex; gap: 10px; align-items: center; }
+    .high { border-color: #e74c3c; }
+    .medium { border-color: #f39c12; }
+    .low { border-color: #27ae60; }
+    .info { flex: 1; }
+    .done .info { text-decoration: line-through; opacity: 0.5; }
+    .overdue { color: #c0392b; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>The Study Planner</h1>
-  <p id="message">Loading...</p>
+  <h1>My Study Planner</h1>
+
+  <form id="taskForm">
+    <input id="title" placeholder="Task (e.g. Maths homework)" required>
+    <input id="due" type="date" required>
+    <select id="priority">
+      <option value="high">🔴 High priority</option>
+      <option value="medium" selected>🟠 Medium priority</option>
+      <option value="low">🟢 Low priority</option>
+    </select>
+    <input id="where" placeholder="Where? (e.g. Room 4, online)">
+    <input id="how" placeholder="How? (e.g. hand in on paper)">
+    <button type="submit">Add task</button>
+  </form>
+
+  <div id="taskList"></div>
 
   <script>
-    document.getElementById("message").textContent = "Let's Get Started!";
-  </script>
-</body>
-</html>
+    // Load saved tasks from the browser (or start with an empty list)
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+    function save() {
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
+
+    // How many days until the due date? (negative = overdue)
+    function daysUntil(dateStr) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const due = new Date(dateStr + "T00:00:00");
+      return Math.round((due - today) / 86400000);
+    }
+
+    function dueText(d) {
+      if (d < 0) return "Overdue by " + (-d) + " day(s)";
+      if (d === 0) return "Due today";
+      if (d === 1) return "Due tomorrow";
+      return "Due in " + d + " days";
+    }
+
+    function render() {
+      const list = document.getElementById("taskList");
+      list.innerHTML = "";
+
+      // Unfinished tasks first, then earliest due date first
+      tasks.sort((a, b) => a.done - b.done || a.due.localeCompare(b.due));
+
+      tasks.forEach(task => {
+        const days = daysUntil(task.due);
+
+        const box = document.createElement("div");
+        box.className = "task " + task.priority + (task.done ? " done" : "");
+
+        const check = document.createElement("input");
+        check.type = "checkbox";
+        check.checked = task.done;
+        check.onchange = () => { task.done = check.checked; save(); render(); };
+
+        const info = document.createElement("div");
+        info.className = "info";
+
+        const title = document.createElement("strong");
+        title.textContent = task.title;
+
+        const when = document.createElement("div");
+        when.textContent = dueText(days) + " (" + task.due + ")";
+        if (days < 0 && !task.done) when.className = "overdue";
+
+        const details = document.createElement("div");
+        details.textContent = "Where: " + (task.where || "-") + " | How: " + (task.how || "-");
+
+        info.append(title, when, details);
+
+        const del = document.createElement("button");
+        del.textContent = "✕";
+        del.onclick = () => { tasks = tasks.filter(t => t.id !== task.id); save(); render(); };
+
+        box.append(check, info, del);
+        list.append(box);
+      });
+    }
