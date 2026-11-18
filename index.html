@@ -116,8 +116,9 @@
 </div>
 
 <script>
-  // ===== Profiles: change these names (use nicknames, the repo is public) =====
-  const PROFILES = ["Ari", "Ethan", "Stefan"];
+  // ===== CHANGE THESE NAMES (nicknames only, the repo is public) =====
+  const PROFILES = ["Me", "Brother 1", "Brother 2"];
+  // ===================================================================
 
   let user = null;
   let tasks = [];
@@ -199,8 +200,6 @@
   }
 
   function renderCalendar() {
-    const y = calMonth.getFullYear
-function renderCalendar() {
     const y = calMonth.getFullYear(), m = calMonth.getMonth();
     $("calTitle").textContent = calMonth.toLocaleString("en-GB", { month: "long", year: "numeric" });
     const grid = $("calGrid"); grid.innerHTML = "";
