@@ -200,3 +200,90 @@
 
   function renderCalendar() {
     const y = calMonth.getFullYear
+function renderCalendar() {
+    const y = calMonth.getFullYear(), m = calMonth.getMonth();
+    $("calTitle").textContent = calMonth.toLocaleString("en-GB", { month: "long", year: "numeric" });
+    const grid = $("calGrid"); grid.innerHTML = "";
+    ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].forEach(d => {
+      const h = document.createElement("div"); h.className = "dow"; h.textContent = d; grid.append(h);
+    });
+    const offset = (new Date(y, m, 1).getDay() + 6) % 7;   // Monday first
+    for (let i = 0; i < offset; i++) grid.append(document.createElement("div"));
+    const total = new Date(y, m + 1, 0).getDate();
+    const todayISO = toISO(new Date());
+    for (let day = 1; day <= total; day++) {
+      const iso = toISO(new Date(y, m, day));
+      const cell = document.createElement("div");
+      cell.className = "day" + (iso === todayISO ? " today" : "");
+      cell.append(String(day));
+      tasks.filter(t => t.due === iso && !t.done).forEach(t => {
+        const chip = document.createElement("span");
+        chip.className = "chip " + t.priority; chip.textContent = t.title;
+        cell.append(chip);
+      });
+      grid.append(cell);
+    }
+  }
+
+  function renderPinboard() {
+    const board = $("board"); board.innerHTML = "";
+    const order = { high: 0, medium: 1, low: 2 };
+    tasks.filter(t => !t.done)
+         .sort((a, b) => order[a.priority] - order[b.priority] || byDate(a, b))
+         .forEach(t => {
+      const n = document.createElement("div");
+      n.className = "note " + t.priority;
+      n.style.transform = "rotate(" + ((t.id % 9) - 4) + "deg)";   // a different tilt for each note
+      n.textContent = "📌 " + t.title + " – " + dueText(daysUntil(t.due));
+      board.append(n);
+    });
+    if (!board.children.length) board.textContent = "The board is empty. Add tasks and they'll appear here.";
+  }
+
+  function renderAll() { renderHome(); renderTasks(); renderCalendar(); renderPinboard(); }
+
+  // ----- Navigation -----
+  function showPage(name) {
+    document.querySelectorAll(".page").forEach(p => p.hidden = p.id !== name);
+    document.querySelectorAll("nav button[data-page]").forEach(b => b.classList.toggle("active", b.dataset.page === name));
+  }
+  document.querySelectorAll("nav button[data-page]").forEach(b => b.onclick = () => showPage(b.dataset.page));
+  $("prev").onclick = () => { calMonth.setMonth(calMonth.getMonth() - 1); renderCalendar(); };
+  $("next").onclick = () => { calMonth.setMonth(calMonth.getMonth() + 1); renderCalendar(); };
+
+  // ----- Sign in / out -----
+  PROFILES.forEach(p => { const o = document.createElement("option"); o.textContent = p; $("profile").append(o); });
+
+  function start(name) {
+    user = name; load();
+    $("login").hidden = true; $("app").hidden = false;
+    showPage("home"); renderAll();
+  }
+  $("signIn").onclick = () => {
+    const name = $("profile").value;
+    if ($("remember").checked) localStorage.setItem("rememberedUser", name);
+    else sessionStorage.setItem("user", name);
+    start(name);
+  };
+  $("logout").onclick = () => {
+    localStorage.removeItem("rememberedUser"); sessionStorage.removeItem("user");
+    user = null; $("app").hidden = true; $("login").hidden = false;
+  };
+
+  // ----- Add a task -----
+  $("taskForm").addEventListener("submit", e => {
+    e.preventDefault();
+    tasks.push({
+      id: Date.now(), title: $("title").value, due: $("due").value,
+      priority: $("priority").value, category: $("category").value,
+      where: $("where").value, how: $("how").value, done: false
+    });
+    save(); e.target.reset(); renderAll();
+  });
+
+  // ----- On opening: skip sign-in if remembered -----
+  const saved = localStorage.getItem("rememberedUser") || sessionStorage.getItem("user");
+  if (saved && PROFILES.includes(saved)) start(saved);
+</script>
+</body>
+</html>
