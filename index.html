@@ -7,6 +7,8 @@
 <style>
   [hidden] { display: none !important; }
   * { box-sizing: border-box; }
+  
+  :root { --bg: #ffffff; --list: #c9e4f5; --nav: #2c3e50; --text: #333333; }
   body { margin: 0; font-family: sans-serif; background: #b1f2ff; color: #333; }
 
   /* Sign in */
@@ -23,6 +25,9 @@
   main { flex: 1; padding: 16px; overflow: hidden; }
   h1, h2 { margin-top: 0; }
 
+#login { border: 1px solid #ddd; }
+.page > h1, .page > h2, .page > h3, #calHead, .dow { color: var(--text); }
+  
   /* Tasks */
   .task { background: white; border-left: 10px solid grey; margin: 8px 0; padding: 8px; border-radius: 8px; display: flex; gap: 8px; align-items: center; }
   .high { border-color: #e74c3c; } .medium { border-color: #f39c12; } .low { border-color: #27ae60; }
@@ -120,6 +125,23 @@
   const PROFILES = ["Ari", "Ethan", "Stefan"];
   // ===================================================================
 
+ const SIGNIN_THEME = { bg: "#ffffff", list: "#c9e4f5", nav: "#2c3e50", text: "#333333" };
+
+  const THEMES = {
+    "Me":        { bg: "#7bd1ce", list: "#b5e8e6", nav: "#2a7f7c", text: "#1f2d2d" },
+    "Brother 1": { bg: "#d0320e", list: "#f4b5a6", nav: "#7a1d08", text: "#ffffff" },
+    "Brother 2": { bg: "#00ffd4", list: "#8affea", nav: "#007d68", text: "#12332d" }
+  };
+
+  function applyTheme(name) {
+    const t = THEMES[name] || SIGNIN_THEME;
+    const root = document.documentElement.style;
+    root.setProperty("--bg", t.bg);
+    root.setProperty("--list", t.list);
+    root.setProperty("--nav", t.nav);
+    root.setProperty("--text", t.text);
+  }
+  
   let user = null;
   let tasks = [];
   let calMonth = new Date(); calMonth.setDate(1);
