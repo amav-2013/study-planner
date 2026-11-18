@@ -1,124 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Study Planner</title>
-  <style>
-    body { font-family: sans-serif; background: #fdf6e3; max-width: 700px; margin: 0 auto; padding: 20px; }
-    h1 { text-align: center; color: #444; }
-    form { display: grid; gap: 8px; background: white; padding: 16px; border-radius: 10px; }
-    input, select, button { padding: 8px; font-size: 1rem; }
-    .task { background: white; border-left: 10px solid grey; margin: 10px 0; padding: 10px;
-            border-radius: 8px; display: flex; gap: 10px; align-items: center; }
-    .high { border-color: #e74c3c; }
-    .medium { border-color: #f39c12; }
-    .low { border-color: #27ae60; }
-    .info { flex: 1; }
-    .done .info { text-decoration: line-through; opacity: 0.5; }
-    .overdue { color: #c0392b; font-weight: bold; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Study Planner</title>
+<style>
+  [hidden] { display: none !important; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: sans-serif; background: #fdf6e3; color: #333; }
+
+  /* Sign in */
+  #login { max-width: 360px; margin: 80px auto; background: white; padding: 24px; border-radius: 12px; text-align: center; }
+  #login select, #login button { width: 100%; padding: 10px; margin: 8px 0; font-size: 1rem; }
+
+  /* Layout */
+  #app { display: flex; min-height: 100vh; }
+  nav { width: 76px; background: #2c3e50; display: flex; flex-direction: column; }
+  nav button { background: none; border: none; color: white; padding: 14px 4px; font-size: 1.5rem; cursor: pointer; border-bottom: 1px solid #3d566e; }
+  nav button span { display: block; font-size: 0.65rem; }
+  nav button.active { background: #e67e22; }
+  nav #logout { margin-top: auto; border-top: 1px solid #3d566e; }
+  main { flex: 1; padding: 16px; overflow: hidden; }
+  h1, h2 { margin-top: 0; }
+
+  /* Tasks */
+  .task { background: white; border-left: 10px solid grey; margin: 8px 0; padding: 8px; border-radius: 8px; display: flex; gap: 8px; align-items: center; }
+  .high { border-color: #e74c3c; } .medium { border-color: #f39c12; } .low { border-color: #27ae60; }
+  .info { flex: 1; font-size: 0.9rem; }
+  .done .info { text-decoration: line-through; opacity: 0.5; }
+  .overdue { color: #c0392b; font-weight: bold; }
+  form { display: grid; gap: 6px; background: white; padding: 12px; border-radius: 10px; margin-bottom: 12px; }
+  input, select, button { padding: 8px; font-size: 1rem; }
+
+  /* Tasks page: glide sideways, scroll down */
+  #lists { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 8px; }
+  .list { min-width: 290px; flex: 0 0 290px; scroll-snap-align: start; background: #f3e9c9; border-radius: 10px; padding: 10px; max-height: 60vh; overflow-y: auto; }
+
+  /* Calendar */
+  #calHead { display: flex; justify-content: space-between; align-items: center; }
+  #calGrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .dow { text-align: center; font-weight: bold; }
+  .day { background: white; min-height: 70px; border-radius: 6px; padding: 3px; font-size: 0.75rem; overflow: hidden; }
+  .day.today { outline: 3px solid #e67e22; }
+  .chip { display: block; color: white; border-radius: 4px; padding: 1px 3px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chip.high { background: #e74c3c; } .chip.medium { background: #f39c12; } .chip.low { background: #27ae60; }
+
+  /* Pinboard */
+  #board { background: #c68e5b; border: 10px solid #7b4f2a; border-radius: 8px; min-height: 340px; padding: 16px; display: flex; flex-wrap: wrap; gap: 18px; }
+  .note { width: 150px; min-height: 120px; padding: 10px; box-shadow: 3px 4px 6px rgba(0,0,0,.35); font-size: 0.9rem; }
+  .note.high { background: #ff8a80; } .note.medium { background: #ffd180; } .note.low { background: #b9f6ca; }
+</style>
 </head>
 <body>
-  <h1>My Study Planner</h1>
 
-  <form id="taskForm">
-    <input id="title" placeholder="Task (e.g. Maths homework)" required>
-    <input id="due" type="date" required>
-    <select id="priority">
-      <option value="high">🔴 High priority</option>
-      <option value="medium" selected>🟠 Medium priority</option>
-      <option value="low">🟢 Low priority</option>
-    </select>
-    <input id="where" placeholder="Where? (e.g. Room 4, online)">
-    <input id="how" placeholder="How? (e.g. hand in on paper)">
-    <button type="submit">Add task</button>
-  </form>
+<!-- 1) SIGN IN -->
+<div id="login">
+  <h1>The Study Planner</h1>
+  <select id="profile"></select>
+  <label><input type="checkbox" id="remember"> Remember me</label>
+  <button id="signIn">Sign in</button>
+</div>
 
-  <div id="taskList"></div>
+<!-- 2) MAIN SITE -->
+<div id="app" hidden>
+  <nav>
+    <button data-page="home">🏠<span>Home</span></button>
+    <button data-page="calendar">📅<span>Calendar</span></button>
+    <button data-page="tasks">✅<span>Tasks</span></button>
+    <button data-page="pinboard">📌<span>Pinboard</span></button>
+    <button id="logout">🚪<span>Log out</span></button>
+  </nav>
 
-  <script>
-    // Load saved tasks from the browser (or start with an empty list)
-    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+  <main>
+    <section class="page" id="home">
+      <h1>The Study Planner</h1>
+      <h2 id="hello"></h2>
+      <h3>Coming up</h3>
+      <div id="homeTasks"></div>
+    </section>
 
-    function save() {
-      localStorage.setItem("tasks", JSON.stringify(tasks));
-    }
+    <section class="page" id="calendar">
+      <h1>Calendar</h1>
+      <div id="calHead">
+        <button id="prev">◀</button><strong id="calTitle"></strong><button id="next">▶</button>
+      </div>
+      <div id="calGrid"></div>
+    </section>
 
-    // How many days until the due date? (negative = overdue)
-    function daysUntil(dateStr) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const due = new Date(dateStr + "T00:00:00");
-      return Math.round((due - today) / 86400000);
-    }
+    <section class="page" id="tasks">
+      <h1>Tasks</h1>
+      <form id="taskForm">
+        <input id="title" placeholder="Task (e.g. Maths homework)" required>
+        <input id="due" type="date" required>
+        <select id="priority">
+          <option value="high">🔴 High priority</option>
+          <option value="medium" selected>🟠 Medium priority</option>
+          <option value="low">🟢 Low priority</option>
+        </select>
+        <select id="category">
+          <option value="todo">To Do</option>
+          <option value="fun">Fun things</option>
+        </select>
+        <input id="where" placeholder="Where?">
+        <input id="how" placeholder="How?">
+        <button type="submit">Add task</button>
+      </form>
+      <div id="lists"></div>
+    </section>
 
-    function dueText(d) {
-      if (d < 0) return "Overdue by " + (-d) + " day(s)";
-      if (d === 0) return "Due today";
-      if (d === 1) return "Due tomorrow";
-      return "Due in " + d + " days";
-    }
+    <section class="page" id="pinboard">
+      <h1>Pinboard</h1>
+      <div id="board"></div>
+    </section>
+  </main>
+</div>
 
-    function render() {
-      const list = document.getElementById("taskList");
-      list.innerHTML = "";
+<script>
+  // ===== Profiles: change these names (use nicknames, the repo is public) =====
+  const PROFILES = ["Ari", "Ethan", "Stefan"];
 
-      // Unfinished tasks first, then earliest due date first
-      tasks.sort((a, b) => a.done - b.done || a.due.localeCompare(b.due));
+  let user = null;
+  let tasks = [];
+  let calMonth = new Date(); calMonth.setDate(1);
 
-      tasks.forEach(task => {
-        const days = daysUntil(task.due);
+  const $ = id => document.getElementById(id);
 
-        const box = document.createElement("div");
-        box.className = "task " + task.priority + (task.done ? " done" : "");
+  // ----- Saving (per profile) -----
+  function load() { tasks = JSON.parse(localStorage.getItem("tasks_" + user)) || []; }
+  function save() { localStorage.setItem("tasks_" + user, JSON.stringify(tasks)); }
 
-        const check = document.createElement("input");
-        check.type = "checkbox";
-        check.checked = task.done;
-        check.onchange = () => { task.done = check.checked; save(); render(); };
+  // ----- Date helpers -----
+  function toISO(d) {
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function daysUntil(s) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    return Math.round((new Date(s + "T00:00:00") - today) / 86400000);
+  }
+  function dueText(d) {
+    if (d < 0) return "Overdue by " + (-d) + " day(s)";
+    if (d === 0) return "Due today";
+    if (d === 1) return "Due tomorrow";
+    return "Due in " + d + " days";
+  }
 
-        const info = document.createElement("div");
-        info.className = "info";
+  // ----- One task card (used on Home and Tasks pages) -----
+  function taskEl(t) {
+    const days = daysUntil(t.due);
+    const box = document.createElement("div");
+    box.className = "task " + t.priority + (t.done ? " done" : "");
 
-        const title = document.createElement("strong");
-        title.textContent = task.title;
+    const check = document.createElement("input");
+    check.type = "checkbox";
+    check.checked = t.done;
+    check.onchange = () => { t.done = check.checked; save(); renderAll(); };
 
-        const when = document.createElement("div");
-        when.textContent = dueText(days) + " (" + task.due + ")";
-        if (days < 0 && !task.done) when.className = "overdue";
+    const info = document.createElement("div");
+    info.className = "info";
+    const name = document.createElement("strong"); name.textContent = t.title;
+    const when = document.createElement("div"); when.textContent = dueText(days) + " (" + t.due + ")";
+    if (days < 0 && !t.done) when.className = "overdue";
+    const det = document.createElement("div"); det.textContent = "Where: " + (t.where || "-") + " | How: " + (t.how || "-");
+    info.append(name, when, det);
 
-        const details = document.createElement("div");
-        details.textContent = "Where: " + (task.where || "-") + " | How: " + (task.how || "-");
+    const del = document.createElement("button");
+    del.textContent = "✕";
+    del.onclick = () => { tasks = tasks.filter(x => x.id !== t.id); save(); renderAll(); };
 
-        info.append(title, when, details);
+    box.append(check, info, del);
+    return box;
+  }
 
-        const del = document.createElement("button");
-        del.textContent = "✕";
-        del.onclick = () => { tasks = tasks.filter(t => t.id !== task.id); save(); render(); };
+  const byDate = (a, b) => a.due.localeCompare(b.due);
 
-        box.append(check, info, del);
-        list.append(box);
-      });
-    }
+  // ----- Pages -----
+  function renderHome() {
+    $("hello").textContent = "Hello, " + user + "!";
+    const box = $("homeTasks"); box.innerHTML = "";
+    const soon = tasks.filter(t => !t.done).sort(byDate).slice(0, 5);
+    if (soon.length === 0) box.textContent = "Nothing to do. Add tasks on the Tasks page.";
+    soon.forEach(t => box.append(taskEl(t)));
+  }
 
-    document.getElementById("taskForm").addEventListener("submit", event => {
-      event.preventDefault();
-      tasks.push({
-        id: Date.now(),
-        title: document.getElementById("title").value,
-        due: document.getElementById("due").value,
-        priority: document.getElementById("priority").value,
-        where: document.getElementById("where").value,
-        how: document.getElementById("how").value,
-        done: false
-      });
-      save();
-      event.target.reset();
-      render();
+  function renderTasks() {
+    const lists = $("lists"); lists.innerHTML = "";
+    const groups = [
+      ["⏰ Due this week", tasks.filter(t => !t.done && daysUntil(t.due) <= 7)],
+      ["📝 To Do",         tasks.filter(t => !t.done && t.category === "todo")],
+      ["🎉 Fun things",    tasks.filter(t => !t.done && t.category === "fun")],
+      ["✔ Done",           tasks.filter(t => t.done)]
+    ];
+    groups.forEach(([name, items]) => {
+      const col = document.createElement("div"); col.className = "list";
+      const h = document.createElement("h3"); h.textContent = name; col.append(h);
+      items.sort(byDate).forEach(t => col.append(taskEl(t)));
+      lists.append(col);
     });
+  }
 
-    render();
-  </script>
-</body>
-</html>
+  function renderCalendar() {
+    const y = calMonth.getFullYear
