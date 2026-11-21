@@ -16,7 +16,7 @@
 
   /* Layout */
   #app { display: flex; min-height: 100vh; }
-  nav { width: 76px; background: var(--nav); display: flex; flex-direction: column; }
+  nav { width: 76px; background: var(--nav); display: flex; flex-direction: column; border-radius: 12px; } 
   nav button { background: none; border: none; color: white; padding: 14px 4px; font-size: 1.5rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,.25); }
   nav button span { display: block; font-size: 0.65rem; }
   nav button.active { background: #e67e22; }
@@ -32,7 +32,7 @@
   .done .info { text-decoration: line-through; opacity: 0.5; }
   .overdue { color: #c0392b; font-weight: bold; }
   form { display: grid; gap: 6px; background: white; color: #333; padding: 12px; border-radius: 10px; margin-bottom: 12px; }
-  input, select, button { padding: 8px; font-size: 1rem; }
+  input, select, button { padding: 8px; font-size: 1rem; border-radius: 8px; }
 
   /* Tasks page: glide sideways, scroll down */
   #lists { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 8px; }
@@ -49,7 +49,7 @@
 
   /* Pinboard */
   #board { background: #c68e5b; border: 10px solid #7b4f2a; border-radius: 8px; min-height: 340px; padding: 16px; display: flex; flex-wrap: wrap; gap: 18px; }
-  .note { width: 150px; min-height: 120px; padding: 10px; color: #333; box-shadow: 3px 4px 6px rgba(0,0,0,.35); font-size: 0.9rem; }
+  .note { width: 150px; min-height: 120px; padding: 10px; color: #333; box-shadow: 3px 4px 6px rgba(0,0,0,.35); font-size: 0.9rem; border-radius: 8px; }
   .note.high { background: #ff8a80; } .note.medium { background: #ffd180; } .note.low { background: #b9f6ca; }
 </style>
 </head>
