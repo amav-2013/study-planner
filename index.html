@@ -148,8 +148,29 @@
   const $ = id => document.getElementById(id);
 
   // ----- Saving (per profile) -----
-  function load() { tasks = JSON.parse(localStorage.getItem("tasks_" + user)) || []; }
-  function save() { localStorage.setItem("tasks_" + user, JSON.stringify(tasks)); }
+  const API = 'YOUR_EXEC_URL';   // the /exec address, with no ?key on the end
+
+function getKey() {
+  let k = localStorage.getItem("key");
+  if (!k) { k = prompt("Enter your key"); if (k) localStorage.setItem("key", k); }
+  return k;
+}
+
+async function api(params) {
+  const url = API + "?" + new URLSearchParams({ key: getKey(), ...params });
+  const r = await fetch(url);
+  return r.json();
+}
+
+async function load() {
+  const data = await api({ profile: user });
+  if (data.error) {
+    localStorage.removeItem("key");
+    alert("Wrong key. Reload the page and try again.");
+    return;
+  }
+  tasks = data.map(t => ({ ...t, done: t.done === true || t.done === "TRUE" }));
+}
 
   // ----- Date helpers -----
   function toISO(d) {
@@ -175,7 +196,7 @@
     const check = document.createElement("input");
     check.type = "checkbox";
     check.checked = t.done;
-    check.onchange = () => { t.done = check.checked; save(); renderAll(); };
+    check.onchange = () => { t.done = check.checked; api({ action: "done", id: t.id, value: t.done }); renderAll(); };
 
     const info = document.createElement("div");
     info.className = "info";
@@ -187,7 +208,7 @@
 
     const del = document.createElement("button");
     del.textContent = "✕";
-    del.onclick = () => { tasks = tasks.filter(x => x.id !== t.id); save(); renderAll(); };
+    del.onclick = () => { tasks = tasks.filter(x => x.id !== t.id); api({ action: "delete", id: t.id }); renderAll(); };
 
     box.append(check, info, del);
     return box;
@@ -274,7 +295,15 @@
   // ----- Sign in / out -----
   PROFILES.forEach(p => { const o = document.createElement("option"); o.textContent = p; $("profile").append(o); });
 
-  function start(name) {
+  async function start(name) {
+  user = name;
+  applyTheme(name);
+  $("login").hidden = true; $("app").hidden = false;
+  showPage("home");
+  await load();
+  renderAll();
+}
+  
     user = name; load();
     applyTheme(name);
     $("login").hidden = true; $("app").hidden = false;
@@ -292,16 +321,19 @@
   };
 
   // ----- Add a task -----
-  $("taskForm").addEventListener("submit", e => {
-    e.preventDefault();
-    tasks.push({
-      id: Date.now(), title: $("title").value, due: $("due").value,
-      priority: $("priority").value, category: $("category").value,
-      where: $("where").value, how: $("how").value, done: false
-    });
-    save(); e.target.reset(); renderAll();
-  });
-
+  $("taskForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const task = {
+    title: $("title").value, due: $("due").value,
+    priority: $("priority").value, category: $("category").value,
+    where: $("where").value, how: $("how").value
+  };
+  e.target.reset();
+  await api({ action: "add", profile: user, ...task });
+  await load();
+  renderAll();
+});
+  
   // ----- On opening: skip sign-in if remembered -----
   const saved = localStorage.getItem("rememberedUser") || sessionStorage.getItem("user");
   if (saved && PROFILES.includes(saved)) start(saved);
