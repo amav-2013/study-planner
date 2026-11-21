@@ -181,12 +181,12 @@ async function load() {
     return Math.round((new Date(s + "T00:00:00") - today) / 86400000);
   }
   function dueText(d) {
+    if (isNaN(d)) return "No date";
     if (d < 0) return "Overdue by " + (-d) + " day(s)";
     if (d === 0) return "Due today";
     if (d === 1) return "Due tomorrow";
     return "Due in " + d + " days";
   }
-
   // ----- One task card (used on Home and Tasks pages) -----
   function taskEl(t) {
     const days = daysUntil(t.due);
@@ -214,8 +214,8 @@ async function load() {
     return box;
   }
 
-  const byDate = (a, b) => a.due.localeCompare(b.due);
-
+  const byDate = (a, b) => (a.due || "9999").localeCompare(b.due || "9999");
+  
   // ----- Pages -----
   function renderHome() {
     $("hello").textContent = "Hello, " + user + "!";
@@ -303,12 +303,7 @@ async function load() {
   await load();
   renderAll();
 }
-  
-    user = name; load();
-    applyTheme(name);
-    $("login").hidden = true; $("app").hidden = false;
-    showPage("home"); renderAll();
-  }
+
   $("signIn").onclick = () => {
     const name = $("profile").value;
     if ($("remember").checked) localStorage.setItem("rememberedUser", name);
