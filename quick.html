@@ -10,6 +10,7 @@
   .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .grid.num { grid-template-columns: repeat(4, 1fr); }
   button { padding: 18px 6px; font-size: 1.2rem; border-radius: 12px; border: 2px solid #2c3e50; background: #c9e4f5; }
+  input { font-size: 1.2rem; padding: 12px; border-radius: 12px; margin: 6px; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -22,7 +23,11 @@
 
 <div id="p2" hidden>
   <h1>When is it due?</h1>
-  <div class="grid num" id="days"></div>
+  <button id="today">Today</button>
+  <button id="tomorrow">Tomorrow</button>
+  <p>Or pick a date:</p>
+  <input type="date" id="pick">
+  <button id="go">Add task</button>
 </div>
 
 <div id="p3" hidden>
@@ -69,11 +74,10 @@
   }
 
   // Phase 3: send it and confirm
-  async function send(n) {
-    const d = new Date(); d.setDate(d.getDate() + n);
+  async function send(iso) {
     const params = new URLSearchParams({
       key: getKey(), action: "add", profile: profile,
-      title: subject, due: toISO(d), priority: "medium", category: "todo"
+      title: subject, due: iso, priority: "medium", category: "todo"
     });
     $("msg").textContent = "Sending...";
     show(3);
