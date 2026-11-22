@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick add</title>
+<style>
+  body { font-family: sans-serif; margin: 0; padding: 20px; text-align: center; color: #333; }
+  h1 { font-size: 1.4rem; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .grid.num { grid-template-columns: repeat(4, 1fr); }
+  button { padding: 18px 6px; font-size: 1.2rem; border-radius: 12px; border: 2px solid #2c3e50; background: #c9e4f5; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="p1">
+  <h1>What is the new task?</h1>
+  <div class="grid" id="subjects"></div>
+</div>
+
+<div id="p2" hidden>
+  <h1>When is it due?</h1>
+  <div class="grid num" id="days"></div>
+</div>
+
+<div id="p3" hidden>
+  <h1 id="msg"></h1>
+  <button id="again">NEW</button>
+</div>
+
+<script>
+  const API = 'https://script.google.com/macros/s/AKfycbxHx7IEb51g2JYvdXw2iGycvsOxou2aOWklQtmzMcU0iFzbACiR6-GFJasaciXlsuOy/exec';   // same address as in index.html, no ?key
+  const SUBJECTS = ["Maths", "English", "French", "Science", "Spanish"];
+  const profile = new URLSearchParams(location.search).get("profile") || "Ari";
+
+  const $ = id => document.getElementById(id);
+  let subject = null;
+
+  function getKey() {
+    let k = localStorage.getItem("key");
+    if (!k) { k = prompt("Enter your key"); if (k) localStorage.setItem("key", k); }
+    return k;
+  }
+
+  function toISO(d) {
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+
+  function show(n) {
+    ["p1", "p2", "p3"].forEach(id => $(id).hidden = id !== "p" + n);
+  }
+
+  // Phase 1: pick a subject
+  SUBJECTS.forEach(s => {
+    const b = document.createElement("button");
+    b.textContent = s;
+    b.onclick = () => { subject = s; show(2); };
+    $("subjects").append(b);
+  });
+
+  // Phase 2: pick how many days away it is due
+  for (let n = 0; n <= 9; n++) {
+    const b = document.createElement("button");
+    b.textContent = n === 0 ? "Today" : n;
+    b.onclick = () => send(n);
+    $("days").append(b);
+  }
+
+  // Phase 3: send it and confirm
+  async function send(n) {
+    const d = new Date(); d.setDate(d.getDate() + n);
+    const params = new URLSearchParams({
+      key: getKey(), action: "add", profile: profile,
+      title: subject, due: toISO(d), priority: "medium", category: "todo"
+    });
+    $("msg").textContent = "Sending...";
+    show(3);
+    try {
+      const r = await (await fetch(API + "?" + params)).json();
+      if (r.ok) {
+        $("msg").textContent = "Task added! ✔";
+      } else {
+        localStorage.removeItem("key");
+        $("msg").textContent = "Wrong key. Press NEW and try again.";
+      }
+    } catch (err) {
+      $("msg").textContent = "Couldn't reach the sheet. Check your connection.";
+    }
+  }
+
+  $("again").onclick = () => show(1);
+</script>
+</body>
+</html>
