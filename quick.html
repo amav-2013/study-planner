@@ -8,8 +8,7 @@
   body { font-family: sans-serif; margin: 0; padding: 20px; text-align: center; color: #333; }
   h1 { font-size: 1.4rem; }
   .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .grid.num { grid-template-columns: repeat(4, 1fr); }
-  button { padding: 18px 6px; font-size: 1.2rem; border-radius: 12px; border: 2px solid #2c3e50; background: #c9e4f5; }
+  button { padding: 18px 6px; font-size: 1.2rem; border-radius: 12px; border: 2px solid #2c3e50; background: #c9e4f5; margin: 6px; }
   input { font-size: 1.2rem; padding: 12px; border-radius: 12px; margin: 6px; }
   [hidden] { display: none !important; }
 </style>
@@ -36,10 +35,10 @@
 </div>
 
 <script>
-  const API = 'https://script.google.com/macros/s/AKfycbxHx7IEb51g2JYvdXw2iGycvsOxou2aOWklQtmzMcU0iFzbACiR6-GFJasaciXlsuOy/exec';   // same address as in index.html, no ?key
+  const API = 'https://script.google.com/macros/s/AKfycbxHx7IEb51g2JYvdXw2iGycvsOxou2aOWklQtmzMcU0iFzbACiR6-GFJasaciXlsuOy/exec
+';
   const SUBJECTS = ["Maths", "English", "French", "Science", "Spanish"];
   const profile = new URLSearchParams(location.search).get("profile") || "Ari";
-
   const $ = id => document.getElementById(id);
   let subject = null;
 
@@ -57,7 +56,6 @@
     ["p1", "p2", "p3"].forEach(id => $(id).hidden = id !== "p" + n);
   }
 
-  // Phase 1: pick a subject
   SUBJECTS.forEach(s => {
     const b = document.createElement("button");
     b.textContent = s;
@@ -65,15 +63,6 @@
     $("subjects").append(b);
   });
 
-  // Phase 2: pick how many days away it is due
-  for (let n = 0; n <= 9; n++) {
-    const b = document.createElement("button");
-    b.textContent = n === 0 ? "Today" : n;
-    b.onclick = () => send(n);
-    $("days").append(b);
-  }
-
-  // Phase 3: send it and confirm
   async function send(iso) {
     const params = new URLSearchParams({
       key: getKey(), action: "add", profile: profile,
@@ -94,6 +83,15 @@
     }
   }
 
+  $("today").onclick = () => send(toISO(new Date()));
+  $("tomorrow").onclick = () => {
+    const d = new Date(); d.setDate(d.getDate() + 1);
+    send(toISO(d));
+  };
+  $("go").onclick = () => {
+    if ($("pick").value) send($("pick").value);
+    else alert("Pick a date first");
+  };
   $("again").onclick = () => show(1);
 </script>
 </body>
