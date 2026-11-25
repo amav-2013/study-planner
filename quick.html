@@ -35,6 +35,7 @@
 </div>
 
 <script>
+  window.onerror = (m, s, l) => { document.body.prepend("ERROR: " + m + " (line " + l + ")"); };
   const API = 'https://script.google.com/macros/s/AKfycbxHx7IEb51g2JYvdXw2iGycvsOxou2aOWklQtmzMcU0iFzbACiR6-GFJasaciXlsuOy/exec
 ';
   const SUBJECTS = ["Maths", "English", "French", "Science", "Spanish"];
